@@ -51,7 +51,7 @@ async function cargarPedidosEnTabla() {
         for (const direccion in gruposDireccion) {
             const pedidosDir = gruposDireccion[direccion];
             const subGruposCadete = {};
-            pedidosDir.forEach(p => { let cad = p[8] || "Sin Cadete"; if (direccion === "Retira en el local.") cad = "Retira"; if (!subGruposCadete[cad]) subGruposCadete[cad] = []; subGruposCadete[cad].push(p); });
+            pedidosDir.forEach(p => { let cad = (!p[8] || p[8] === "0") ? "Sin Cadete" : p[8]; if (direccion === "Retira en el local.") cad = "Retira"; if (!subGruposCadete[cad]) subGruposCadete[cad] = []; subGruposCadete[cad].push(p); });
 
             for (const nombreCadete in subGruposCadete) {
                 const pedidosSubGrupo = subGruposCadete[nombreCadete];
@@ -549,7 +549,7 @@ async function guardarEdicionPedido() {
     } catch (err) { alert(`❌ Error de conexión: ${err.message}`); }
 }
 
-async function cargarPedidosDinamicos() {
+/* async function cargarPedidosDinamicos() {
     let direccion = document.getElementById("direccion").value.trim();
     const piso = document.getElementById("piso").value.trim();
     const depto = document.getElementById("depto").value.trim();
@@ -594,19 +594,25 @@ async function cargarPedidosDinamicos() {
         const guarnicion = fila.querySelector(".guarnicion").value.trim();
         const descripcion = fila.querySelector(".descripcion").value.trim();
         const cantidad = parseInt(fila.querySelector(".cantidad").value.trim()) || 1;
+
         const idHidden = fila.querySelector(".id_pedido_fila");
         const id_pedido = idHidden ? idHidden.value : null;
 
         const pedido = { id_pedido, nombre, tipo_menu, menu, guarnicion, descripcion, cantidad, forma_pago, estado };
-        if (nombre !== "" || menu !== "" || descripcion !== "") pedidos.push(pedido);
+        
+        // Si estamos editando y existe un id_pedido, o si hay texto, lo enviamos.
+        // Esto evita que el pedido se pierda/elimine si se le borra el texto durante una actualización.
+        if (nombre !== "" || menu !== "" || descripcion !== "" || (esEdicion && id_pedido)) {
+            pedidos.push(pedido);
+        }
     }
-    
-    if (pedidos.length === 0) {
+    // El salvavidas original se mantiene solo para cuando es un alta 100% nueva y en blanco
+    if (pedidos.length === 0 && !esEdicion) {
         const primeraFila = filas[0]; 
         pedidos.push({ id_pedido: null, nombre: "", tipo_menu: "", menu: "", guarnicion: "", descripcion: "", cantidad: 1, forma_pago: primeraFila.querySelector(".forma_pago").value.trim(), estado: primeraFila.querySelector(".estado").value.trim() });
     }
     
-    // 🔍 1. DETECTAMOS CAMBIOS CRÍTICOS EN EL GRUPO (Dirección, Empresa o Menú de algún item)
+    //  1. DETECTAMOS CAMBIOS CRÍTICOS EN EL GRUPO (Dirección, Empresa o Menú de algún item)
     let cambiosCriticos = false;
     if (esEdicion && datosOriginalesGrupo) {
         const origCab = datosOriginalesGrupo.cabecera;
@@ -722,8 +728,223 @@ async function cargarPedidosDinamicos() {
         if (typeof cargarPedidosEnTabla === "function") await cargarPedidosEnTabla();
         if (typeof recargarTablas === "function") recargarTablas();
     } catch (err) { alert(`❌ Error: ${err.message}`); }
-}
+} */
+async function cargarPedidosDinamicos() {
+    let direccion = document.getElementById("direccion").value.trim();
+    const piso = document.getElementById("piso").value.trim();
+    const depto = document.getElementById("depto").value.trim();
+    const timbre = document.getElementById("timbre").value.trim();
 
+    if (direccion) {
+        if (piso) direccion += ` Piso: "${piso}"`;
+        if (depto) direccion += ` Dpto: "${depto}"`;
+        if (timbre) direccion += ` Timbre: "${timbre}"`;
+    }
+
+    const empresa = document.getElementById("empresa").value.trim();
+    let cadete = document.getElementById("cadete").value.trim();
+    const esRetira = document.querySelector("input[name='tipo'][value='retira']")?.checked;
+    const esPedidosYa = document.querySelector("input[name='tipo'][value='pedidosya']")?.checked;
+
+    if (!esRetira && !esPedidosYa && !direccion && !empresa) { return alert("⚠️ Debés completar Dirección, Empresa o seleccionar 'Retira' / 'PedidosYa'."); }
+    if (esPedidosYa) { direccion = "PedidosYa"; cadete = "PedidosYa"; }
+
+    const idsOriginalesStr = document.getElementById("ids_grupo_originales").value;
+    const esEdicion = idsOriginalesStr !== "";
+    // 👇 EL SALVAVIDAS: Traemos los IDs puros directamente desde el master
+    const arrIdsSeguridad = esEdicion ? idsOriginalesStr.split(",") : [];
+
+    const modalScope = document.getElementById("modalNuevoPedido");
+    const filas = modalScope.querySelectorAll(".fila-pedido");
+    const pedidos = [];
+
+    let nombrePadre = "", formaPagoPadre = "Pendiente", estadoPadre = "Pendiente";
+    let indexFila = 0; // Para rastrear qué ID le toca a cada fila
+
+    for (const fila of filas) {
+        const inputNombreObj = fila.querySelector(".nombre");
+        const esSubItem = fila.classList.contains("fila-subitem") || (inputNombreObj && inputNombreObj.style.display === "none");
+
+        if (!esSubItem) {
+            nombrePadre = inputNombreObj.value.trim();
+            formaPagoPadre = fila.querySelector(".forma_pago").value.trim();
+            estadoPadre = fila.querySelector(".estado").value.trim();
+        }
+        
+        const rawNombre = esSubItem ? nombrePadre : inputNombreObj.value.trim();
+        const rawFormaPago = esSubItem ? formaPagoPadre : fila.querySelector(".forma_pago").value.trim();
+        const rawEstado = esSubItem ? estadoPadre : fila.querySelector(".estado").value.trim();
+        const rawTipoMenu = fila.querySelector(".tipo_menu").value.trim();
+        const rawMenu = fila.querySelector(".menu").value.trim();
+        const rawGuarnicion = fila.querySelector(".guarnicion").value.trim();
+        const rawDescripcion = fila.querySelector(".descripcion").value.trim();
+        const cantidad = parseInt(fila.querySelector(".cantidad").value.trim()) || 1;
+
+        const idHidden = fila.querySelector(".id_pedido_fila");
+        let id_pedido = (idHidden && idHidden.value.trim() !== "") ? idHidden.value : null;
+
+        // 👇 MAGIA: Si el HTML perdió el ID por algún bug al borrar el texto, lo forzamos con el array de seguridad
+        if (esEdicion && !id_pedido && arrIdsSeguridad[indexFila]) {
+            id_pedido = arrIdsSeguridad[indexFila];
+        }
+
+        const pedido = { 
+            id_pedido: id_pedido, 
+            nombre: rawNombre || "0", 
+            tipo_menu: rawTipoMenu || "0", 
+            menu: rawMenu || "0", 
+            guarnicion: rawGuarnicion || "", 
+            descripcion: rawDescripcion || "", 
+            cantidad: cantidad, 
+            forma_pago: rawFormaPago || "Pendiente", 
+            estado: rawEstado || "Pendiente",
+            _menuLimpio: rawMenu 
+        };
+        
+        // Al estar forzado el id_pedido, esto SIEMPRE será verdadero y nunca se eliminará
+        if (rawNombre !== "" || rawMenu !== "" || rawDescripcion !== "" || (esEdicion && id_pedido)) {
+            pedidos.push(pedido);
+        }
+        indexFila++;
+    }
+    
+    // Si la hoja estaba 100% en blanco de origen (alta nueva)
+    if (pedidos.length === 0 && !esEdicion) {
+        const primeraFila = filas[0]; 
+        pedidos.push({ 
+            id_pedido: null, nombre: "0", tipo_menu: "0", menu: "0", guarnicion: "", descripcion: "", cantidad: 1, 
+            forma_pago: primeraFila.querySelector(".forma_pago").value.trim() || "Pendiente", 
+            estado: primeraFila.querySelector(".estado").value.trim() || "Pendiente",
+            _menuLimpio: ""
+        });
+    }
+    
+    let cambiosCriticos = false;
+    if (esEdicion && datosOriginalesGrupo) {
+        const origCab = datosOriginalesGrupo.cabecera;
+        const dirOrig = origCab.direccion === "0" ? "" : origCab.direccion;
+        const empOrig = origCab.empresa === "0" ? "" : origCab.empresa;
+        
+        if (direccion !== dirOrig || empresa !== empOrig) {
+            cambiosCriticos = true;
+        } else {
+            const itemsOriginales = datosOriginalesGrupo.items;
+            for (const p of pedidos) {
+                const id = parseInt(p.id_pedido);
+                if (!id) continue;
+                const itemViejo = itemsOriginales.find(i => parseInt(i.id_pedido) === id);
+                if (itemViejo) {
+                    const menuOrig = itemViejo.menu === "0" ? "" : itemViejo.menu;
+                    if (p._menuLimpio !== menuOrig) { cambiosCriticos = true; break; }
+                }
+            }
+        }
+    }
+
+    const esFrecuente = document.getElementById("chkFrecuente") ? document.getElementById("chkFrecuente").checked : false;
+    const esHistorial = !!document.getElementById("tablaCargados");
+    const volverAPendientes = esHistorial ? cambiosCriticos : false;
+
+    const payloadPedidos = pedidos.map(p => { const { _menuLimpio, ...rest } = p; return rest; });
+
+    const url = esEdicion ? "/actualizar_grupo_pedidos" : "/cargar_pedidos";
+    const data = { 
+        direccion, empresa, cadete, items: payloadPedidos, pedidos: payloadPedidos, 
+        ids_originales: esEdicion ? idsOriginalesStr.split(",") : [], 
+        volver_a_pendientes: volverAPendientes, es_frecuente: esFrecuente 
+    };
+
+    try {
+        await apiFetch(url, { method: "POST", body: JSON.stringify(data) }); 
+        const cantidadItemsCargados = pedidos.length; 
+        
+        if (!esEdicion) {
+            const lista = await apiFetch(`/pedidos?t=${Date.now()}`); 
+            lista.sort((a, b) => parseInt(b[0]) - parseInt(a[0]));
+            const nuevosIds = lista.slice(0, cantidadItemsCargados).map(p => p[0]);
+            localStorage.setItem("ids_verde_fijo", JSON.stringify(nuevosIds));
+            idsUltimoLote = new Set(nuevosIds);
+        } else {
+            let azules = JSON.parse(localStorage.getItem("ids_azul_fijo") || "[]");
+            let flags = JSON.parse(localStorage.getItem("flags_edicion") || "{}");
+            let textos = JSON.parse(localStorage.getItem("textos_edicion") || "{}");
+
+            const origCab = datosOriginalesGrupo.cabecera;
+            const dirOrig = origCab.direccion === "0" ? "" : origCab.direccion;
+            const cadOrig = origCab.cadete === "0" ? "" : origCab.cadete;
+            const itemsOriginales = datosOriginalesGrupo.items;
+            
+            pedidos.forEach(itemNuevo => {
+                const id = parseInt(itemNuevo.id_pedido);
+                if (!id) return; 
+                
+                let misFlags = new Set(flags[id] || []);
+                let cambiosTxt = []; 
+
+                if (direccion !== dirOrig) cambiosTxt.push(`Dir.: '${dirOrig||"Vacío"}' ➔ '${direccion||"Vacío"}'`);
+                if (cadete !== cadOrig) cambiosTxt.push(`Cadete: '${cadOrig||"Vacío"}' ➔ '${cadete||"Vacío"}'`);
+                if (direccion !== dirOrig) misFlags.add("dir");
+                if (cadete !== cadOrig) misFlags.add("cad");
+
+                const itemViejo = itemsOriginales.find(i => parseInt(i.id_pedido) === id);
+                if (itemViejo) {
+                    const nomOrig = itemViejo.nombre === "0" ? "" : itemViejo.nombre;
+                    const nombreVisual = itemNuevo._menuLimpio === "" ? "" : (itemNuevo.nombre === "0" ? "" : itemNuevo.nombre);
+                    if (nombreVisual !== nomOrig && nombreVisual !== "") cambiosTxt.push(`Cliente: '${nomOrig||"Vacío"}' ➔ '${nombreVisual||"Vacío"}'`);
+                    
+                    const menuOrig = itemViejo.menu === "0" ? "" : itemViejo.menu;
+                    if (itemNuevo._menuLimpio !== menuOrig && itemNuevo._menuLimpio !== "") {
+                        cambiosTxt.push(`Menú: '${menuOrig||"Vacío"}' ➔ '${itemNuevo._menuLimpio||"Vacío"}'`);
+                    }
+                    
+                    if (String(itemNuevo.cantidad) !== String(itemViejo.cantidad)) cambiosTxt.push(`Cant.: '${itemViejo.cantidad}' ➔ '${itemNuevo.cantidad}'`);
+
+                    const cambioItem = (nombreVisual !== nomOrig && nombreVisual !== "") || (itemNuevo._menuLimpio !== menuOrig && itemNuevo._menuLimpio !== "") || (String(itemNuevo.cantidad) !== String(itemViejo.cantidad));
+                    if (cambioItem) misFlags.add("item");
+                }
+
+                // SI SE VACIÓ EL PEDIDO, PURGAMOS LA MEMORIA VISUAL
+                if (itemNuevo._menuLimpio === "") {
+                    misFlags.delete("item");
+                    delete textos[id];
+                    delete flags[id];
+                    azules = azules.filter(x => x !== id);
+                } else {
+                    if (cambiosTxt.length > 0) {
+                        let anteriores = textos[id] || [];
+                        let prefijosNuevos = cambiosTxt.map(c => c.split(":")[0] + ":");
+                        let filtrados = anteriores.filter(a => !prefijosNuevos.some(pref => a.startsWith(pref)));
+                        textos[id] = [...filtrados, ...cambiosTxt];
+                    }
+                    if (misFlags.size > 0) {
+                        flags[id] = Array.from(misFlags);
+                        if (!azules.includes(id)) azules.push(id);
+                    } else {
+                        delete flags[id];
+                        azules = azules.filter(x => x !== id);
+                    }
+                }
+            });
+            
+            localStorage.setItem("ids_azul_fijo", JSON.stringify(azules));
+            localStorage.setItem("flags_edicion", JSON.stringify(flags));
+            localStorage.setItem("textos_edicion", JSON.stringify(textos)); 
+
+            if (esHistorial && !volverAPendientes) {
+                let alPrincipio = JSON.parse(localStorage.getItem("ids_al_principio") || "[]");
+                pedidos.forEach(p => { 
+                    const id = parseInt(p.id_pedido); 
+                    if (id && !alPrincipio.includes(id)) alPrincipio.push(id); 
+                });
+                localStorage.setItem("ids_al_principio", JSON.stringify(alPrincipio));
+            }
+        }
+        esEdicion && alert("✅ Grupo actualizado.");
+        cerrarModalNuevoPedido();
+        if (typeof cargarPedidosEnTabla === "function") await cargarPedidosEnTabla();
+        if (typeof recargarTablas === "function") recargarTablas();
+    } catch (err) { alert(`❌ Error: ${err.message}`); }
+}
 /* ========================================================================== */
 /* 3. ACCIONES DE FILA Y TABLA (Mover, Borrar, Ocultar)                       */
 /* ========================================================================== */
@@ -808,6 +1029,35 @@ async function eliminarGrupo(idsStr) {
     recargarTablas();
 }
 
+/* ========================================================================== */
+/* ACTUALIZADOR DE SISTEMA (GIT PULL)                                      */
+/* ========================================================================== */
+async function ejecutarActualizacion() {
+    if(confirm("¿Desea actualizar el sistema?")) {
+        try {
+            const data = await apiFetch('/api/actualizar/', { method: 'POST' });
+            
+            if(data.estado === 'ok') {
+                const logTexto = data.log.toLowerCase();
+                
+                // Si la consola de Git dice que ya está al día, mostramos el aviso
+                if (logTexto.includes("already up to date") || logTexto.includes("ya está actualizado")) {
+                    alert("No hay actualizaciones disponibles. El sistema ya está en la última versión.");
+                } else {
+                    // Si descargó cosas nuevas, mostramos el éxito y recargamos la página
+                    alert("Sistema actualizado correctamente.\n\n" + data.log);
+                    location.reload();
+                }
+            } else {
+                alert("Error en la actualización:\n" + data.log);
+            }
+        } catch(err) {
+            alert("Error de conexión con el servidor.");
+            console.error(err);
+        }
+    }
+}
+
 // --- EXPORTAR AL OBJETO GLOBAL (Para que el HTML pueda llamar a los botones) ---
 window.cargarPedidosEnTabla = cargarPedidosEnTabla;
 window.recargarTablas = recargarTablas;
@@ -822,3 +1072,4 @@ window.eliminarPedido = eliminarPedido;
 window.eliminarGrupoPersona = eliminarGrupoPersona;
 window.eliminarGrupo = eliminarGrupo;
 window.activarCampoEdicion = activarCampoEdicion;
+window.ejecutarActualizacion = ejecutarActualizacion;

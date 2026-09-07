@@ -22,7 +22,7 @@ function cerrarModalGenerico(idModal) {
 window.abrirModalTipoMenu = () => {
     document.getElementById("modal_nombre_menu").value = "";
     abrirModalGenerico("modalTipoMenu", "modal_tipo_menu");
-    window.cargarMonitoresEnCheckboxes(); // Carga los monitores dinámicamente
+    // window.cargarMonitoresEnCheckboxes(); // Carga los monitores dinámicamente
 };
 window.cerrarModalTipoMenu = () => cerrarModalGenerico("modalTipoMenu");
 
@@ -110,17 +110,17 @@ window.guardarTipoYMenu = async () => {
     
     // ACÁ CAPTURAMOS LOS MONITORES TILDADOS
     const checkboxes = document.querySelectorAll('input[name="monitores_menu"]:checked');
-    const monitores_seleccionados = Array.from(checkboxes).map(cb => cb.value);
+    //const monitores_seleccionados = Array.from(checkboxes).map(cb => cb.value);
 
     if (!tipo || !menu) return alert("⚠️ Completá tipo y nombre del menú.");
-    if (monitores_seleccionados.length === 0) return alert("⚠️ Seleccioná al menos un monitor.");
+    // if (monitores_seleccionados.length === 0) return alert("⚠️ Seleccioná al menos un monitor.");
 
     // Mandamos la lista de monitores al backend
     guardarItemGenerico("/agregar_tipo_y_menu", { 
         tipo_menu: tipo, 
         menu: menu, 
         guarnicion: guarnicion,
-        monitores: monitores_seleccionados 
+        // monitores: monitores_seleccionados 
     }, window.cerrarModalTipoMenu);
 };
 

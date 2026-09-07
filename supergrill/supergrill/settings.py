@@ -76,12 +76,12 @@ WSGI_APPLICATION = 'supergrill.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',           # Usa el mismo motor para MariaDB y MySQL
-        'NAME': 'supergrill_django',                 # El nombre de tu base de datos
-        'USER': 'root',
-        'PASSWORD': '',                             # Tu contraseña de base de datos
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'supergrill_django',
+        'USER': 'postgres',
+        'PASSWORD': 'supergrill2026',
         'HOST': 'localhost',
-        'PORT': '3307',                       
+        'PORT': '5432',
     }
 }
 

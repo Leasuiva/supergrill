@@ -87,5 +87,8 @@ urlpatterns = [
 
     # -- RUTAS PARA MONITORES
     path('agregar_monitor/', views.agregar_monitor, name='agregar_monitor'),
+
+    # --- RUTA DE ACTUALIZACIÓN (actualizar sistema en menu de opciones) ---
+    path('api/actualizar/', views.actualizar_sistema, name='actualizar_sistema'),
 ]
 

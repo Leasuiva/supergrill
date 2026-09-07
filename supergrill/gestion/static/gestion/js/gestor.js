@@ -42,7 +42,9 @@ async function cargarListaGestor(tipo) {
         }
 
         data.forEach(item => {
-            let nombre = item.nombre || item; 
+            let nombre = (item && typeof item.nombre === "string" && item.nombre.trim() !== "")
+                ? item.nombre
+                : "(vacío)"; 
             let oculto = item.oculto === true || item.oculto === 1; 
             let id_item = item.id || nombre; 
             

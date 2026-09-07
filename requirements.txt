@@ -1,0 +1,15 @@
+altgraph==0.17.5
+asgiref==3.11.1
+Django==6.0.3
+mysql-connector-python==9.6.0
+mysqlclient==2.2.8
+packaging==26.3
+pefile==2024.8.26
+psycopg2-binary==2.9.12
+pyinstaller==6.22.2
+pyinstaller-hooks-contrib==2026.7
+PyMySQL==1.1.2
+pywin32-ctypes==0.2.3
+setuptools==84.0.0
+sqlparse==0.5.5
+tzdata==2025.3

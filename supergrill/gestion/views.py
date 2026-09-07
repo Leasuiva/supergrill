@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import json
+import subprocess
 from django.views.decorators.csrf import csrf_exempt
 from .models import Cadete, Guarnicion, FormaPago, TipoMenu, Menu, Pedido, DetallePedido, Registro, Direccion, Empresa, Nombre, Estado, RegistroDiarioCadete, Monitor
 from django.db import transaction
@@ -236,9 +237,7 @@ def _procesar_guardado_grupo(data, es_edicion=False):
     volver_a_pendientes = data.get('volver_a_pendientes', False)
     es_frecuente = data.get('es_frecuente', False)
 
-    # El 'transaction.atomic()' asegura que si algo falla, no se guarde por la mitad
     with transaction.atomic():
-        # 1. Buscamos o creamos la Dirección / Empresa / Cadete
         dir_obj = None
         if direccion_str and direccion_str != "PedidosYa":
             dir_obj, _ = Direccion.objects.get_or_create(direccion=direccion_str)
@@ -258,7 +257,9 @@ def _procesar_guardado_grupo(data, es_edicion=False):
         
         ids_procesados = []
         
-        # 2. Procesamos cada sub-ítem del pedido
+        # EL SALVAVIDAS BACKEND: Si es edición y el ítem viene sin ID pero hay uno original suelto, lo rescatamos
+        idx_seguridad = 0
+        
         for item in items:
             nom_obj = fp_obj = est_obj = tm_obj = guar_obj = menu_obj = None
             
@@ -272,8 +273,11 @@ def _procesar_guardado_grupo(data, es_edicion=False):
 
             id_pedido = item.get('id_pedido')
             
+            # Si el navegador mandó un ID nulo pero estábamos editando un grupo que tenía un ID original, lo enganchamos acá a la fuerza
+            if es_edicion and not id_pedido and idx_seguridad < len(ids_originales):
+                id_pedido = ids_originales[idx_seguridad]
+
             if es_edicion and id_pedido:
-                # MODO EDICIÓN: Actualizamos el pedido existente
                 pedido = Pedido.objects.filter(id=id_pedido).first()
                 if pedido:
                     pedido.direccion = dir_obj; pedido.empresa = emp_obj
@@ -283,14 +287,20 @@ def _procesar_guardado_grupo(data, es_edicion=False):
                     pedido.save()
                     
                     detalle = DetallePedido.objects.filter(pedido=pedido).first()
-                    if detalle and menu_obj:
-                        detalle.menu = menu_obj
+                    if detalle:
+                        if menu_obj:
+                            detalle.menu = menu_obj
+                        else:
+                            # Si no hay menú nuevo, inyectamos el comodín "0" para mantenerlo vivo y limpio
+                            tm_vacio, _ = TipoMenu.objects.get_or_create(tipoMenu="0")
+                            menu_vacio, _ = Menu.objects.get_or_create(nombre_menu="0", tipo_menu=tm_vacio)
+                            detalle.menu = menu_vacio
+                            
                         detalle.cantidad = int(item.get('cantidad', 1))
                         detalle.descripcion = item.get('descripcion', '').strip()
                         detalle.save()
                     ids_procesados.append(int(id_pedido))
             else:
-                # MODO NUEVO: Creamos el pedido de cero
                 nuevo_pedido = Pedido.objects.create(
                     direccion=dir_obj, empresa=emp_obj, cadete=cad_obj,
                     forma_pago=fp_obj, nombre=nom_obj, estado=est_obj, registro=reg_activo
@@ -301,8 +311,9 @@ def _procesar_guardado_grupo(data, es_edicion=False):
                         cantidad=int(item.get('cantidad', 1)), 
                         descripcion=item.get('descripcion', '').strip()
                     )
+            idx_seguridad += 1
                     
-        # 3. Si editamos y borramos una fila, la marcamos como "Eliminada"
+        # Si editamos, solo mandamos a eliminado lo que realmente no esté en los procesados
         if es_edicion:
             for old_id in ids_originales:
                 if old_id not in ids_procesados:
@@ -747,3 +758,21 @@ def buscar_rendicion_cadetes(request):
     except Exception as e:
         print("🚨 ERROR AL BUSCAR RENDICIÓN:", e)
         return JsonResponse({"estado": "error", "mensaje": str(e)}, status=500)
+
+# =================================================================
+# BOTON ACTUALIZR EN PEDIDOS CARGADOS
+# =================================================================
+@csrf_exempt
+def actualizar_sistema(request):
+    """Ejecuta git pull en el servidor para traer las últimas actualizaciones"""
+    if request.method == 'POST':
+        try:
+            resultado = subprocess.run(
+                ['git', 'pull'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return JsonResponse({'estado': 'ok', 'log': resultado.stdout})
+        except subprocess.CalledProcessError as e:
+            return JsonResponse({'estado': 'error', 'log': e.stderr})

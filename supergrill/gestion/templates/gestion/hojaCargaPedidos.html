@@ -64,7 +64,12 @@
                                     🛵 Cadetes
                                 </button>
                             </div>
-                        
+                            <!-- Boton actualizar en menu opciones -->
+                            <div class="submenu-container">
+                            <button class="submenu-btn" onclick="ejecutarActualizacion()" style="color: #ea044e; font-weight: bold;">
+                                🔄 Actualizar
+                            </button>
+                            </div>
                         </div>
                 </div> 
             </div>
@@ -112,12 +117,12 @@
                     <ul id="sug_modal_nombre_menu" class="sugerencias"></ul>
                 </div>
 
-                <div class="campo" style="width: 100%; margin-top: 15px; margin-bottom: 15px;">
+{% comment %}                 <div class="campo" style="width: 100%; margin-top: 15px; margin-bottom: 15px;">
                     <label style="font-weight: bold; margin-bottom: 5px; display: block;">Enviar a monitores:</label>
                     <div id="contenedor_monitores_checkboxes" style="display: flex; gap: 15px; flex-wrap: wrap; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
                         <!-- Acá JavaScript va a inyectar los casilleros automáticamente -->
                     </div>
-                </div>
+                </div> {% endcomment %}
 
                 <button onclick="guardarTipoYMenu()">Guardar</button>
             </div>

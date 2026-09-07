@@ -2,9 +2,10 @@
 env/
 venv/
 
-# Base de datos local 
+# Bases de datos 
 mariaDB/
 db.sqlite3
+pgsql/
 
 # Archivos temporales de Python y Django
 __pycache__/
@@ -16,9 +17,13 @@ __pycache__/
 # Archivos basura de Windows
 Thumbs.db
 
-# Ignorar anotaciones propias
+# Anotaciones propias
 anotaciones/
 conexiones.txt
-
-anotaciones/
 incluir.txt
+
+# Compilados de PyInstaller
+build/
+dist/
+*.spec
+iniciador.exe

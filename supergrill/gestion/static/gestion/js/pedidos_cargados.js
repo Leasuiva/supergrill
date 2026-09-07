@@ -99,7 +99,7 @@ async function cargarTablaCargados() {
                 for (const direccion in gruposDireccion) {
                     const pedidosDir = gruposDireccion[direccion];
                     const subGruposCadete = {};
-                    pedidosDir.forEach(p => { let cad = p[8] || "Sin Cadete"; if (direccion === "🏠 RETIRA EN LOCAL") { cad = "Retira"; } if (!subGruposCadete[cad]) subGruposCadete[cad] = []; subGruposCadete[cad].push(p); });
+                    pedidosDir.forEach(p => { let cad = (!p[8] || p[8] === "0") ? "Sin Cadete" : p[8]; if (direccion === "🏠 RETIRA EN LOCAL") { cad = "Retira"; } if (!subGruposCadete[cad]) subGruposCadete[cad] = []; subGruposCadete[cad].push(p); });
 
                     for (const nombreCadete in subGruposCadete) {
                         const pedidosSubGrupo = subGruposCadete[nombreCadete];
