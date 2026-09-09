@@ -1030,21 +1030,26 @@ async function eliminarGrupo(idsStr) {
 }
 
 /* ========================================================================== */
-/* ACTUALIZADOR DE SISTEMA (GIT PULL)                                      */
+/* ACTUALIZADOR DE SISTEMA (GIT PULL)                                         */
 /* ========================================================================== */
 async function ejecutarActualizacion() {
-    if(confirm("¿Desea actualizar el sistema?")) {
+    const password = prompt("Ingrese la contraseña de administrador para actualizar:");
+    
+    // Si el usuario presiona "Cancelar", password es null. Salimos silenciosamente.
+    if (password === null) {
+        return; 
+    }
+
+    if (password === "adm1n1stra2r") {
         try {
             const data = await apiFetch('/api/actualizar/', { method: 'POST' });
             
             if(data.estado === 'ok') {
                 const logTexto = data.log.toLowerCase();
                 
-                // Si la consola de Git dice que ya está al día, mostramos el aviso
                 if (logTexto.includes("already up to date") || logTexto.includes("ya está actualizado")) {
                     alert("No hay actualizaciones disponibles. El sistema ya está en la última versión.");
                 } else {
-                    // Si descargó cosas nuevas, mostramos el éxito y recargamos la página
                     alert("Sistema actualizado correctamente.\n\n" + data.log);
                     location.reload();
                 }
@@ -1055,6 +1060,8 @@ async function ejecutarActualizacion() {
             alert("Error de conexión con el servidor.");
             console.error(err);
         }
+    } else {
+        alert("Contraseña incorrecta. Actualización cancelada.");
     }
 }
 
