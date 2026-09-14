@@ -1,0 +1,35 @@
+
+Leasuiva
+leakapo1010
+
+Esta es la secuencia exacta y a prueba de fallos:
+
+1. Preparar el terreno
+
+Crea una carpeta en el servidor (ejemplo: C:\Sistema_Supergrill) asegurándote de que esté totalmente vacía. No pegues nada del pendrive todavía.
+
+Si la PC no tiene Git, descárgalo de git-scm.com e instálalo dándole "Siguiente" a todo.
+
+2. Descargar el código
+
+Abre una consola (CMD) dentro de esa nueva carpeta C:\Sistema_Supergrill.
+
+Ejecuta la clonación con el punto al final: git clone [https://github.com/Leasuiva/Supergrill.git](https://github.com/Leasuiva/Supergrill.git) .
+
+git clone https://github.com/Leasuiva/Supergrill.git .
+
+3. Configurar credenciales
+
+En esa misma consola (ya estás en la ruta correcta, omite el cd supergrill), ejecuta: git config --global credential.helper manager.
+
+Ejecuta git pull. Al saltar la ventana, ingresa tu usuario y contraseña para que Windows los memorice para siempre.
+
+4. Traer los motores (El Pendrive)
+
+Conecta tu pendrive y copia únicamente el archivo iniciador.exe y la carpeta pgsql.
+
+Pégalos dentro de C:\Sistema_Supergrill, mezclándolos con los archivos que Git acaba de descargar.
+
+5. Arranque final
+
+Cierra la consola y haz doble clic en tu iniciador.exe.
