@@ -263,6 +263,14 @@ def _procesar_guardado_grupo(data, es_edicion=False):
         for item in items:
             nom_obj = fp_obj = est_obj = tm_obj = guar_obj = menu_obj = None
             
+            forma_pago_val = item.get('forma_pago', '').strip()
+            if forma_pago_val in ["T Jona", "T Luce"]:
+                item['estado'] = "Pagado"
+
+            if item.get('nombre'): nom_obj, _ = Nombre.objects.get_or_create(nombre=item.get('nombre').strip())
+            if item.get('forma_pago'): fp_obj, _ = FormaPago.objects.get_or_create(forma_pago=forma_pago_val)
+            if item.get('estado'): est_obj, _ = Estado.objects.get_or_create(estado=item.get('estado').strip())
+            
             if item.get('nombre'): nom_obj, _ = Nombre.objects.get_or_create(nombre=item.get('nombre').strip())
             if item.get('forma_pago'): fp_obj, _ = FormaPago.objects.get_or_create(forma_pago=item.get('forma_pago').strip())
             if item.get('estado'): est_obj, _ = Estado.objects.get_or_create(estado=item.get('estado').strip())
@@ -347,6 +355,7 @@ def mover_a_cargados(request, id_pedido):
         return JsonResponse({"status": "ok"})
 
 @csrf_exempt
+@csrf_exempt
 def actualizar_campo_rapido(request):
     """Para cuando tocas el lapicito al lado de la celda de pago o estado"""
     if request.method == 'POST':
@@ -360,6 +369,12 @@ def actualizar_campo_rapido(request):
         elif campo == 'forma_pago':
             obj, _ = FormaPago.objects.get_or_create(forma_pago=valor)
             pedidos.update(forma_pago=obj)
+            
+            # 👇 NUEVA LÓGICA: Auto-Pagado para cuentas especiales
+            if valor in ["T Jona", "T Luce"]:
+                estado_pagado, _ = Estado.objects.get_or_create(estado="Pagado")
+                pedidos.update(estado=estado_pagado)
+                
         elif campo == 'cadete':
             if valor in ["PedidosYa", "Retira"]: pedidos.update(cadete=None)
             else:

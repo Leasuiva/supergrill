@@ -1065,6 +1065,35 @@ async function ejecutarActualizacion() {
     }
 }
 
+/* ========================================================================== */
+/* AUTO-PAGADO PARA T JONA Y T LUCE EN MODALES                                */
+/* ========================================================================== */
+document.addEventListener('click', function(e) {
+    // Detectamos si el usuario hizo clic en un ítem <li> de la lista de sugerencias
+    if (e.target.tagName === 'LI' && e.target.closest('.sugerencias')) {
+        const ul = e.target.closest('.sugerencias');
+        const campo = ul.closest('.campo');
+        if (!campo) return;
+        
+        // Verificamos si la lista desplegable corresponde a "Forma de pago"
+        const inputFormaPago = campo.querySelector('.forma_pago');
+        if (inputFormaPago) {
+            const valorSeleccionado = e.target.textContent.trim();
+            
+            // Si es T Jona o T Luce, buscamos el input de Estado de esa misma fila
+            if (valorSeleccionado === 'T Jona' || valorSeleccionado === 'T Luce') {
+                const fila = campo.closest('.fila-pedido');
+                if (fila) {
+                    const inputEstado = fila.querySelector('.estado');
+                    if (inputEstado) {
+                        inputEstado.value = 'Pagado';
+                    }
+                }
+            }
+        }
+    }
+});
+
 // --- EXPORTAR AL OBJETO GLOBAL (Para que el HTML pueda llamar a los botones) ---
 window.cargarPedidosEnTabla = cargarPedidosEnTabla;
 window.recargarTablas = recargarTablas;
