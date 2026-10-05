@@ -249,12 +249,12 @@ function agregarFilaPedido(id_pedido_existente = null) {
 
     fila.querySelectorAll("input[type='text']").forEach(input => {
         const clase = input.className;
-        if (["tipo_menu", "menu", "guarnicion", "forma_pago", "estado"].includes(clase)) {
+        if (["tipo_menu", "guarnicion", "forma_pago", "estado"].includes(clase)) {
             input.readOnly = true; input.style.cursor = "pointer";
             input.addEventListener("click", () => mostrarTodo(input));
             input.addEventListener("keydown", (e) => e.preventDefault());
         }
-        if (["nombre", "descripcion", "estado"].includes(clase)) {
+        if (["nombre", "descripcion", "estado", "menu"].includes(clase)) {
             input.addEventListener("input", () => {
                 const val = input.value;
                 const urlMap = { nombre: "/nombres", descripcion: "/descripciones", estado: "/estados" };
@@ -378,7 +378,7 @@ window.removerFilaPedido = removerFilaPedido;
 /* 4. CONFIGURACIÓN INICIAL DE INPUTS Y SUGERENCIAS GLOBALES                  */
 /* ========================================================================== */
 
-function configurarInputsDinamicos() {
+/* function configurarInputsDinamicos() {
     const dirInput = document.getElementById("direccion");
     const empInput = document.getElementById("empresa");
     const cadInput = document.getElementById("cadete");
@@ -445,6 +445,99 @@ function configurarInputsDinamicos() {
     document.querySelectorAll(".flecha-desplegar").forEach((flecha) => flecha.addEventListener("click", (e) => { e.stopPropagation(); mostrarTodo(flecha); }));
     document.querySelectorAll("input[readonly]").forEach((input) => { input.style.cursor = "pointer"; input.addEventListener("click", () => mostrarTodo(input)); });
     
+    document.querySelectorAll("input[type='text']").forEach(input => {
+        input.addEventListener("keydown", (e) => {
+            const ul = document.getElementById("sugerencias_" + input.id);
+            if (e.key === "Tab" && ul && ul.style.display === "block") { e.preventDefault(); ul.querySelector("li[tabindex='0']")?.focus(); }
+        });
+    });
+} */
+
+function configurarInputsDinamicos() {
+    const dirInput = document.getElementById("direccion");
+    const empInput = document.getElementById("empresa");
+    const cadInput = document.getElementById("cadete");
+
+    if (dirInput) {
+        dirInput.addEventListener("input", () => {
+            if (!dirInput.value) { limpiarSugerencias("sugerencias_direccion"); return; }
+            fetchYMostrarSugerencias("sugerencias_direccion", "/direcciones", dirInput.value);
+        });
+        
+        // Concatena piso, depto y timbre antes de validar 👇
+        dirInput.addEventListener("blur", () => { 
+            let dirAValidar = dirInput.value.trim();
+            const piso = document.getElementById("piso")?.value.trim() || "";
+            const depto = document.getElementById("depto")?.value.trim() || "";
+            const timbre = document.getElementById("timbre")?.value.trim() || "";
+
+            if (dirAValidar) {
+                if (piso) dirAValidar += ` Piso: "${piso}"`;
+                if (depto) dirAValidar += ` Dpto: "${depto}"`;
+                if (timbre) dirAValidar += ` Timbre: "${timbre}"`;
+            }
+
+            if (dirAValidar && (!cadInput || !cadInput.value.trim())) {
+                cargarCadeteFrecuente("direccion", dirAValidar); 
+            }
+        });
+    }
+
+    if (empInput) {
+        empInput.addEventListener("input", () => {
+            if (!empInput.value) { limpiarSugerencias("sugerencias_empresa"); return; }
+            fetchYMostrarSugerencias("sugerencias_empresa", "/empresas", empInput.value);
+        });
+        empInput.addEventListener("blur", () => { if (empInput.value.trim() && (!cadInput || !cadInput.value.trim())) cargarCadeteFrecuente("empresa", empInput.value.trim()); });
+    }
+
+    if (cadInput) {
+        cadInput.addEventListener("input", () => {
+            if (!cadInput.value) { limpiarSugerencias("sugerencias_cadete"); return; }
+            fetchYMostrarSugerencias("sugerencias_cadete", "/cadetes", cadInput.value);
+        });
+    }
+
+    ["nombre", "tipo_menu", "menu", "guarnicion", "forma_pago", "estado"].forEach(clase => {
+        const inp = document.querySelector(`input.${clase}`);
+        if (!inp) return;
+        const mapa = { nombre: "/nombres", tipo_menu: "/tipo_menu", guarnicion: "/guarniciones", forma_pago: "/forma_pago", estado: "/estados" };
+        
+        inp.addEventListener("input", () => {
+            const val = inp.value;
+            const ul = inp.closest(".campo")?.querySelector("ul.sugerencias");
+            if (!val || !ul) { if(ul) ul.innerHTML = ""; ul.style.display = "none"; return; }
+            
+            if (clase === "menu") {
+                const tipo = inp.closest(".fila-dos")?.querySelector("input[name='tipo_menu']")?.value;
+                // Dejamos que traiga las sugerencias si hay un tipo seleccionado
+                if(tipo) fetchYMostrarSugerencias(ul, `/menus_por_tipo/${encodeURIComponent(tipo)}`, val);
+            } else if (mapa[clase]) {
+                fetchYMostrarSugerencias(ul, mapa[clase], val);
+            }
+        });
+    });
+
+    document.querySelectorAll(".flecha-desplegar").forEach((flecha) => flecha.addEventListener("click", (e) => { e.stopPropagation(); mostrarTodo(flecha); }));
+    
+    // 👇 ESTE ES EL CAMBIO CLAVE 👇
+    // Antes esto se aplicaba a todos los inputs con readonly, pero como le sacaste el readonly a "menu", la flechita no andaba y te bloqueaba el input.
+    // Ahora busca específicamente los inputs que SI tienen readonly y les bloquea la escritura.
+    document.querySelectorAll("input[readonly]").forEach((input) => { 
+        input.style.cursor = "pointer"; 
+        input.addEventListener("click", () => mostrarTodo(input)); 
+        input.addEventListener("keydown", (e) => {
+             // Solo permitimos el tab para navegar, bloqueamos todo el resto si es readonly
+            if(e.key !== "Tab") e.preventDefault(); 
+        });
+    });
+    
+    // A los campos de menú, como ya NO son readonly, les ponemos el evento del click para que abran las opciones igual, pero sin bloquear el tipeo.
+    document.querySelectorAll("input.menu").forEach(inputMenu => {
+        inputMenu.addEventListener("click", () => mostrarTodo(inputMenu));
+    });
+    // 👆 FIN DEL CAMBIO CLAVE 👆
+
     document.querySelectorAll("input[type='text']").forEach(input => {
         input.addEventListener("keydown", (e) => {
             const ul = document.getElementById("sugerencias_" + input.id);
