@@ -443,12 +443,30 @@ document.addEventListener("DOMContentLoaded", () => {
             window.evaluarEstadoTablaCadetes();
         });
 
-        // 2. Al hacer clic en una sugerencia (el input pierde el foco), BUSCAMOS los datos
+        // 2. Al perder el foco, VALIDAMOS que exista en la BD y BUSCAMOS los datos
         inputCadeteRendicion.addEventListener('blur', () => {
-            // Le damos 250 milisegundos para que el autocompletado termine de pegar el nombre antes de buscar
-            setTimeout(() => {
-                if (inputCadeteRendicion.value.trim() !== "") {
-                    window.buscarRendicionCadete();
+            // Le damos 250 ms para que el clic en la sugerencia tenga prioridad
+            setTimeout(async () => {
+                const val = inputCadeteRendicion.value.trim();
+                if (val !== "") {
+                    try {
+                        const res = await fetch("/cadetes");
+                        const cadetesValidos = await res.json();
+                        
+                        // Busca coincidencia ignorando mayúsculas/minúsculas
+                        const match = cadetesValidos.find(c => c.toLowerCase() === val.toLowerCase());
+                        
+                        if (match) {
+                            inputCadeteRendicion.value = match; // Ajusta mayúsculas/minúsculas perfecto
+                            window.buscarRendicionCadete();
+                        } else {
+                            alert("⚠️ Cadete no registrado. Seleccioná uno de la lista o agregalo desde 'Opciones'.");
+                            inputCadeteRendicion.value = "";
+                            inputCadeteRendicion.dispatchEvent(new Event('input')); // 👈 Esto limpia y bloquea la tabla
+                        }
+                    } catch (e) {
+                        window.buscarRendicionCadete(); // Fallback si falla la red
+                    }
                 }
             }, 250);
         });

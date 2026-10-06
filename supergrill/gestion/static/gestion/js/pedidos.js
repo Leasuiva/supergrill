@@ -445,7 +445,29 @@ async function guardarEdicionPedido() {
     const menuOrig = orig.menu === "0" ? "" : orig.menu;
 
     const empresaNueva = document.getElementById("edit_empresa").value.trim();
-    const menuNuevo = document.getElementById("edit_menu").value.trim();
+    let menuNuevo = document.getElementById("edit_menu").value.trim(); // Lo pasamos a 'let' para poder corregir mayúsculas
+    const tipoMenuNuevo = document.getElementById("edit_tipo_menu").value.trim();
+
+    // 👇 --- INICIO DE VALIDACIÓN ESTRICTA DE MENÚ (EN EDICIÓN) --- 👇
+    if (menuNuevo !== "" && menuNuevo !== "0" && tipoMenuNuevo !== "") {
+        try {
+            const res = await fetch(`/menus_por_tipo/${encodeURIComponent(tipoMenuNuevo)}`);
+            const menusValidos = await res.json();
+            
+            const match = menusValidos.find(m => m.toLowerCase() === menuNuevo.toLowerCase());
+            
+            if (match) {
+                menuNuevo = match; // Corregimos mayúsculas/minúsculas en memoria
+                document.getElementById("edit_menu").value = match; // Lo corregimos visualmente en el input
+            } else {
+                alert(`⛔ NO SE PUEDE GUARDAR:\n\nEl menú "${menuNuevo}" no existe dentro de la categoría "${tipoMenuNuevo}".\n\nPor favor, corregilo o agregá el menú nuevo desde "Opciones ➔ Agregar item".`);
+                return; // 🛑 Cortamos la función y evitamos que se guarde en la BD
+            }
+        } catch (err) {
+            console.error("Error al validar el menú:", err);
+        }
+    }
+    // 👆 --- FIN DE VALIDACIÓN ESTRICTA DE MENÚ --- 👆
 
     //  2. DETECTAMOS SI HUBO CAMBIOS CRÍTICOS (Dirección, Empresa o Menú)
     const cambiosCriticos = (dirCompleta !== dirOrig) || (empresaNueva !== empOrig) || (menuNuevo !== menuOrig);
@@ -458,11 +480,11 @@ async function guardarEdicionPedido() {
     const data = {
         id_pedido: document.getElementById("edit_id_pedido").value,
         direccion: dirCompleta, 
-        empresa: empresaNueva, // Usamos la variable que ya limpiamos
+        empresa: empresaNueva, 
         cadete: document.getElementById("edit_cadete").value.trim(),
         nombre: document.getElementById("edit_nombre").value.trim(),
         tipo_menu: document.getElementById("edit_tipo_menu").value.trim(),
-        menu: menuNuevo, // Usamos la variable que ya limpiamos
+        menu: menuNuevo, // Mandamos la variable ya validada
         guarnicion: document.getElementById("edit_guarnicion").value.trim(),
         descripcion: document.getElementById("edit_descripcion").value.trim(),
         cantidad: document.getElementById("edit_cantidad").value,
@@ -818,6 +840,36 @@ async function cargarPedidosDinamicos() {
             _menuLimpio: ""
         });
     }
+
+    // 👇 --- INICIO DE VALIDACIÓN ESTRICTA DE MENÚ (AL CARGAR) --- 👇
+    for (let i = 0; i < pedidos.length; i++) {
+        const p = pedidos[i];
+        
+        // Si tiene un menú escrito (y no es el '0' vacío por defecto)
+        if (p._menuLimpio !== "" && p._menuLimpio !== "0") {
+            try {
+                // Consultamos a la base de datos los menús válidos para ese Tipo
+                const res = await fetch(`/menus_por_tipo/${encodeURIComponent(p.tipo_menu)}`);
+                const menusValidos = await res.json();
+                
+                // Buscamos coincidencia exacta (ignorando mayúsculas/minúsculas)
+                const match = menusValidos.find(m => m.toLowerCase() === p._menuLimpio.toLowerCase());
+                
+                if (match) {
+                    // Si existe, le asignamos el nombre exacto de la base de datos
+                    p.menu = match;
+                    p._menuLimpio = match;
+                } else {
+                    // Si inventaron un menú, frenamos la carga y avisamos
+                    alert(`⛔ NO SE PUEDE CARGAR EL PEDIDO:\n\nEl menú "${p._menuLimpio}" no existe dentro de la categoría "${p.tipo_menu}".\n\nPor favor, corregilo o agregá el menú nuevo desde "Opciones ➔ Agregar item".`);
+                    return; // 🛑 Esto corta la función por completo y no guarda nada
+                }
+            } catch (err) {
+                console.error("Error al validar el menú:", err);
+            }
+        }
+    }
+    // 👆 --- FIN DE VALIDACIÓN ESTRICTA DE MENÚ --- 👆
     
     let cambiosCriticos = false;
     if (esEdicion && datosOriginalesGrupo) {

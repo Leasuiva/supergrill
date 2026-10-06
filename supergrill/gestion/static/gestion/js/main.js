@@ -260,15 +260,23 @@ function agregarFilaPedido(id_pedido_existente = null) {
                 const urlMap = { nombre: "/nombres", descripcion: "/descripciones", estado: "/estados" };
                 const ul = input.closest(".campo").querySelector("ul.sugerencias");
                 if (!val) { if(ul) { ul.innerHTML = ""; ul.style.display = "none"; } return; }
-                if (ul) fetchYMostrarSugerencias(ul, urlMap[clase], val);
+                
+                // 👇 ACÁ ESTÁ LA MAGIA QUE FALTABA
+                if (clase === "menu") {
+                    const tipo = input.closest(".fila-dos")?.querySelector("input[name='tipo_menu']")?.value;
+                    if (tipo) fetchYMostrarSugerencias(ul, `/menus_por_tipo/${encodeURIComponent(tipo)}`, val);
+                } else if (urlMap[clase]) {
+                    fetchYMostrarSugerencias(ul, urlMap[clase], val);
+                }
             });
         }
+        // 3. QUE EL MENÚ SE DESPLIEGUE AL HACER CLIC, PERO SIN BLOQUEAR EL TECLADO
         if (clase === "menu") {
-            input.addEventListener("input", () => {
-                const tipo = fila.querySelector("input[name='tipo_menu']")?.value;
+            input.addEventListener("click", () => {
                 const ul = input.closest(".campo").querySelector("ul.sugerencias");
-                if (!input.value || !tipo || !ul) return;
-                fetchYMostrarSugerencias(ul, `/menus_por_tipo/${encodeURIComponent(tipo)}`, input.value);
+                if (ul && ul.style.display !== "block") {
+                    mostrarTodo(input);
+                }
             });
         }
     });
@@ -499,30 +507,27 @@ function configurarInputsDinamicos() {
     }
 
     ["nombre", "tipo_menu", "menu", "guarnicion", "forma_pago", "estado"].forEach(clase => {
-        const inp = document.querySelector(`input.${clase}`);
-        if (!inp) return;
-        const mapa = { nombre: "/nombres", tipo_menu: "/tipo_menu", guarnicion: "/guarniciones", forma_pago: "/forma_pago", estado: "/estados" };
-        
-        inp.addEventListener("input", () => {
-            const val = inp.value;
-            const ul = inp.closest(".campo")?.querySelector("ul.sugerencias");
-            if (!val || !ul) { if(ul) ul.innerHTML = ""; ul.style.display = "none"; return; }
+        document.querySelectorAll(`input.${clase}`).forEach(inp => {
+            const mapa = { nombre: "/nombres", tipo_menu: "/tipo_menu", guarnicion: "/guarniciones", forma_pago: "/forma_pago", estado: "/estados" };
             
-            if (clase === "menu") {
-                const tipo = inp.closest(".fila-dos")?.querySelector("input[name='tipo_menu']")?.value;
-                // Dejamos que traiga las sugerencias si hay un tipo seleccionado
-                if(tipo) fetchYMostrarSugerencias(ul, `/menus_por_tipo/${encodeURIComponent(tipo)}`, val);
-            } else if (mapa[clase]) {
-                fetchYMostrarSugerencias(ul, mapa[clase], val);
-            }
+            inp.addEventListener("input", () => {
+                const val = inp.value;
+                const ul = inp.closest(".campo")?.querySelector("ul.sugerencias");
+                if (!val || !ul) { if(ul) ul.innerHTML = ""; ul.style.display = "none"; return; }
+                
+                if (clase === "menu") {
+                    const tipo = inp.closest(".fila-dos")?.querySelector("input[name='tipo_menu']")?.value;
+                    if(tipo) fetchYMostrarSugerencias(ul, `/menus_por_tipo/${encodeURIComponent(tipo)}`, val);
+                } else if (mapa[clase]) {
+                    fetchYMostrarSugerencias(ul, mapa[clase], val);
+                }
+            });
         });
     });
 
     document.querySelectorAll(".flecha-desplegar").forEach((flecha) => flecha.addEventListener("click", (e) => { e.stopPropagation(); mostrarTodo(flecha); }));
     
-    // 👇 ESTE ES EL CAMBIO CLAVE 👇
-    // Antes esto se aplicaba a todos los inputs con readonly, pero como le sacaste el readonly a "menu", la flechita no andaba y te bloqueaba el input.
-    // Ahora busca específicamente los inputs que SI tienen readonly y les bloquea la escritura.
+    // 👇 LOS INPUTS READONLY SE SIGUEN COMPORTANDO COMO ANTES 👇
     document.querySelectorAll("input[readonly]").forEach((input) => { 
         input.style.cursor = "pointer"; 
         input.addEventListener("click", () => mostrarTodo(input)); 
@@ -532,11 +537,15 @@ function configurarInputsDinamicos() {
         });
     });
     
-    // A los campos de menú, como ya NO son readonly, les ponemos el evento del click para que abran las opciones igual, pero sin bloquear el tipeo.
+    // 👇 LA MAGIA PARA LOS MENÚS: Click para abrir (solo si está cerrado), y permite escribir libremente 👇
     document.querySelectorAll("input.menu").forEach(inputMenu => {
-        inputMenu.addEventListener("click", () => mostrarTodo(inputMenu));
+        inputMenu.addEventListener("click", () => {
+            const ul = inputMenu.closest(".campo").querySelector("ul.sugerencias");
+            if (ul && ul.style.display !== "block") {
+                mostrarTodo(inputMenu);
+            }
+        });
     });
-    // 👆 FIN DEL CAMBIO CLAVE 👆
 
     document.querySelectorAll("input[type='text']").forEach(input => {
         input.addEventListener("keydown", (e) => {
@@ -560,6 +569,15 @@ function configurarInputsEdicion() {
 
     const inputEditMenu = document.getElementById("edit_menu");
     if (inputEditMenu) {
+        // 👇 NUEVO: Mostrar al hacer clic
+        inputEditMenu.addEventListener("click", function() {
+            const ul = document.getElementById("sug_edit_menu");
+            if (ul && ul.style.display !== "block") {
+                mostrarTodo(this);
+            }
+        });
+
+        // Este ya lo tenías, lo dejamos igual:
         inputEditMenu.addEventListener("input", function() {
             const tipo = document.getElementById("edit_tipo_menu")?.value;
             const ul = document.getElementById("sug_edit_menu");
@@ -840,3 +858,4 @@ window.guardarEdicionRapida = async function(idsStr, campo, nuevoValor) {
         }
     } catch (err) { alert("❌ Error de conexión: " + err.message); }
 };
+
