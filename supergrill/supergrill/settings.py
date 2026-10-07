@@ -122,3 +122,26 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+# =================================================================
+# CONFIGURACIÓN DE LOGS (ERRORES DEL SISTEMA)
+# =================================================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            # Usa el BASE_DIR que ya tenés definido arriba para ubicar el archivo
+            'filename': str(BASE_DIR / 'errores_sistema.log'), 
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
