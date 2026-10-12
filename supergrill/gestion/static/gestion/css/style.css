@@ -38,6 +38,18 @@
 .dropdown-content.oculto { display: none; }
 .dropdown-content:not(.oculto) { display: block; }
 
+.dropdown-content hr {
+    border: none;
+    border-top: 1px solid #eeeeee; /* Un gris muy suavecito para el modo claro */
+    background-color: transparent;
+    margin: 0;                     /* Mata el hueco/espacio gigante */
+}
+
+/* Si la línea es el primer elemento arriba de todo, la ocultamos */
+.dropdown-content hr:first-child {
+    display: none;
+}
+
 
 /* ========================================================================== */
 /* 2. LAYOUT GENERAL (MODO APP - SIN SCROLL GLOBAL)                           */
@@ -1935,5 +1947,340 @@ table td:first-child {
     background-color: #dadce0 !important; /* Gris un poco más oscuro al pasar el mouse */
 }
 
+/* ========================================================================== */
+/* MODO OSCURO (DARK MODE)                                                    */
+/* ========================================================================== */
+html.dark-mode,
+html.dark-mode body {
+    background-color: #121212 !important;
+    color: #e0e0e0;
+}
 
+/* Contenedores principales y modales */
+html.dark-mode .formulario,
+html.dark-mode .contenedor-historial,
+html.dark-mode .modal-contenido,
+html.dark-mode .tabla-scroll,
+html.dark-mode .sugerencias,
+html.dark-mode .dropdown-content,
+html.dark-mode .submenu-content,
+html.dark-mode #menuAgregarItems,
+html.dark-mode .bloque-tipo-menu {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0;
+    border-color: #333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+}
 
+/* Inputs y Selects */
+html.dark-mode input[type="text"], 
+html.dark-mode input[type="number"], 
+html.dark-mode select,
+html.dark-mode textarea {
+    background-color: #2d2d2d !important;
+    color: #e0e0e0 !important;
+    border-color: #444 !important;
+}
+
+/* Botones del buscador (Refrescar) */
+html.dark-mode .filtro-tabla button,
+html.dark-mode #btnRefrescarTabla,
+html.dark-mode #btnRefrescarCargados {
+    background-color: transparent !important; /* Hace invisible el fondo */
+    border: none !important;                  /* Quita la línea del borde */
+    box-shadow: none !important;              /* Por si tiene alguna sombra heredada */
+}
+
+/* Efecto sutil al pasar el mouse */
+html.dark-mode .filtro-tabla button:hover,
+html.dark-mode #btnRefrescarTabla:hover,
+html.dark-mode #btnRefrescarCargados:hover {
+    background-color: rgba(255, 255, 255, 0) !important; /* Un gris muy transparente solo al hacer hover */
+    border-radius: 50%; /* Lo hace redondito al pasar el mouse para que quede más moderno */
+}
+
+html.dark-mode input[type="text"]:focus,
+html.dark-mode input[type="number"]:focus {
+    border-color: #1a73e8 !important;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.3) !important;
+}
+
+/* Botones Superiores (Navbar) */
+html.dark-mode .dropbtn {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+html.dark-mode .dropbtn:hover {
+    background-color: #3d3d3d;
+}
+
+/* Menús Desplegables y Opciones */
+html.dark-mode .dropdown-content button,
+html.dark-mode #menuAgregarItems button,
+html.dark-mode .sugerencias li {
+    color: #e0e0e0;
+    border-bottom: 1px solid #333;
+}
+html.dark-mode .dropdown-content button:hover,
+html.dark-mode #menuAgregarItems button:hover,
+html.dark-mode .sugerencias li:hover {
+    background-color: #2d2d2d;
+    color: #66b2ff;
+}
+
+/* Celdas de las Tablas */
+html.dark-mode table.sheet td,
+html.dark-mode .celda-direccion,
+html.dark-mode .celda-cadete {
+    background-color: #1e1e1e !important;
+    color: #ccc !important;
+    border-color: #333 !important;
+}
+
+/* Bordes lógicos de tablas */
+html.dark-mode .borde-interno { border-bottom: 1px solid #333 !important; }
+html.dark-mode .borde-grupo { border-bottom: 2px solid #555 !important; }
+
+/* Apagamos la línea vertical divisoria de la última columna */
+html.dark-mode .borde-izquierdo-estado,
+html.dark-mode #tablaPedidos td:last-child,
+html.dark-mode #tablaCargados td:last-child,
+html.dark-mode #tablaArchivados td:last-child { 
+    border-left: 2px solid #333 !important; 
+}
+
+html.dark-mode td.celda-direccion { border-right: 2px solid #444 !important; }
+html.dark-mode td.celda-cadete { 
+    border-left: 2px solid #444 !important; 
+    border-right: 2px solid #444 !important; 
+}
+
+/* Textos específicos */
+html.dark-mode .texto-pedido { color: #d0d0d0; }
+html.dark-mode label { color: #bbb; }
+html.dark-mode h3 { color: #e0e0e0; background: transparent; }
+
+/* Hovers de filas (Efecto Cebra / Grupos) */
+html.dark-mode tr.grupo-fondo-gris td,
+html.dark-mode tr.grupo-fondo-gris td.celda-direccion {
+    background-color: #252525 !important;
+}
+
+/* Hover de fila activa */
+html.dark-mode #tablaPedidos tbody tr.hover-grupo-activo td,
+html.dark-mode #tablaCargados tbody tr.hover-grupo-activo td {
+    background-color: #333 !important;
+}
+
+/* Hover oscuro para Forma de Pago y Estado */
+html.dark-mode #tablaPedidos tbody tr:hover .contenedor-badge-centro,
+html.dark-mode #tablaCargados tbody tr:hover .contenedor-badge-centro {
+    background-color: #2c2c2c00 !important; /* Mismo gris oscuro que el hover del pedido */
+}
+
+html.dark-mode #tablaPedidos tbody tr:hover .item-pedido-container,
+html.dark-mode #tablaCargados tbody tr:hover .item-pedido-container {
+    background-color: #2c2c2c !important;
+}
+
+/* Modal Tetris / Cantidades */
+html.dark-mode .lista-totales li:nth-child(odd) { background-color: #252525; border-bottom: 1px solid #333;}
+html.dark-mode .lista-totales li:nth-child(even) { background-color: #1e1e1e; border-bottom: 1px solid #333;}
+html.dark-mode .modal-footer-custom { background-color: #1e1e1e; border-top: 1px solid #333;}
+
+/* Íconos generales y botones cerrar */
+html.dark-mode .btn-icono { color: #aaa; }
+html.dark-mode .btn-icono:hover { color: #fff; }
+html.dark-mode .btn-icono.externo { background-color: #3a1a1a; border-color: #552222; }
+
+/* Textos específicos */
+html.dark-mode .texto-pedido { color: #d0d0d0; }
+html.dark-mode label { color: #e0e0e0 !important; } 
+html.dark-mode h3 { color: #e0e0e0; background: transparent; }
+
+/* ========================================================================== */
+/* ESTILOS DEL TOGGLE SWITCH (MODO OSCURO)                                    */
+/* ========================================================================== */
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+  margin: 0;
+}
+
+/* Ocultar el checkbox de HTML nativo */
+.theme-switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* El fondo del switch */
+.theme-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+/* El círculo blanco interior */
+.theme-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+
+/* Cuando está checkeado (Activo/Oscuro) */
+.theme-switch input:checked + .slider {
+  background-color: #1a73e8; /* Azul oscuro */
+}
+
+/* Movimiento del círculo */
+.theme-switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* Bordes redondeados */
+.theme-switch .slider.round {
+  border-radius: 22px;
+}
+.theme-switch .slider.round:before {
+  border-radius: 50%;
+}
+
+/* Líneas divisorias (hr) de los menús desplegables */
+html.dark-mode .dropdown-content hr {
+    border-color: #333 !important;
+    border-top: 1px solid #333 !important;
+}
+
+/* ========================================================================== */
+/* FILAS ELIMINADAS (BLINDAJE TOTAL ANTI-HOVER EN MODO OSCURO)                */
+/* ========================================================================== */
+
+/* 1. Forzamos el fondo rosa ganándole a los IDs de las tablas */
+html.dark-mode #tablaCargados tbody tr.fila-eliminada td,
+html.dark-mode #tablaPedidos tbody tr.fila-eliminada td,
+html.dark-mode #tablaArchivados tbody tr.fila-eliminada td,
+html.dark-mode #tablaCargados tbody tr.fila-eliminada.hover-grupo-activo td,
+html.dark-mode #tablaPedidos tbody tr.fila-eliminada.hover-grupo-activo td,
+html.dark-mode #tablaArchivados tbody tr.fila-eliminada.hover-grupo-activo td {
+    background-color: #ffe6e6 !important;
+    color: #a71d2a !important;
+}
+
+/* 2. Texto del pedido rojo oscuro */
+html.dark-mode .fila-eliminada .texto-pedido {
+    color: #a71d2a !important;
+}
+
+/* 3. Apagamos el hover del pedido (el cuadro punteado del medio) */
+html.dark-mode #tablaCargados tbody tr.fila-eliminada:hover .item-pedido-container,
+html.dark-mode #tablaPedidos tbody tr.fila-eliminada:hover .item-pedido-container {
+    background-color: transparent !important;
+}
+
+/* 4. Apagamos el hover gris de Forma de Pago y Estado */
+html.dark-mode #tablaCargados tbody tr.fila-eliminada:hover .contenedor-badge-centro,
+html.dark-mode #tablaPedidos tbody tr.fila-eliminada:hover .contenedor-badge-centro {
+    background-color: transparent !important;
+}
+
+/* ========================================================================== */
+/* BARRA DE BÚSQUEDA ARCHIVADOS (MODO OSCURO)                                 */
+/* ========================================================================== */
+html.dark-mode .barra-busqueda-pro {
+    background-color: #1e1e1e !important; /* Gris oscuro igual que el resto */
+    border-color: #333 !important;        /* Borde oscuro para que no resalte */
+}
+
+/* Oscurecemos también los inputs de fecha (Desde / Hasta) */
+html.dark-mode .item-fecha input {
+    background-color: #2d2d2d !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444 !important;
+    color-scheme: dark; /* 🔥 Trucazo: Esto le avisa al navegador que pinte el calendario desplegable de negro */
+}
+
+/* ========================================================================== */
+/* MODAL HISTORIAL DE PEDIDOS (ARCHIVADOS) - BLINDAJE OSCURO                  */
+/* ========================================================================== */
+
+/* 1. Título principal (Forzamos que el fondo y la letra cambien sí o sí) */
+html.dark-mode #modalCantidades h3,
+html.dark-mode .modal-contenido h3 {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+    border-bottom: 1px solid #333 !important;
+}
+
+/* 2. Textos inyectados por JS (Dirección, Piso, Timbre, etc) */
+/* Al apuntar a #contenedorTotalesUnificados matamos cualquier color oscuro inyectado */
+html.dark-mode #contenedorTotalesUnificados span,
+html.dark-mode #contenedorTotalesUnificados div,
+html.dark-mode #contenedorTotalesUnificados p,
+html.dark-mode #contenedorTotalesUnificados b {
+    color: #e0e0e0 !important;
+}
+
+/* 3. Protegemos los colores de los elementos que SÍ queremos que resalten */
+/* El numerito verde de las cantidades */
+html.dark-mode .badge-conteo { 
+    color: #ffffff !important; 
+}
+/* El título verde del resumen */
+html.dark-mode .bloque-tipo-menu h5 { 
+    color: #ffffff !important; 
+}
+/* La barra inferior del total de unidades */
+html.dark-mode .barra-total-negra { 
+    background-color: #0b2e0c !important; /* Verde muy oscuro para no desentonar */
+    color: #ffffff !important; 
+}
+
+/* ========================================================================== */
+/* BOTÓN "X" DE ELIMINAR PERMANENTEMENTE (MODO OSCURO)                        */
+/* ========================================================================== */
+html.dark-mode [title*="liminar permanentemente"],
+html.dark-mode [title*="liminiar permanentemente"],
+html.dark-mode .eliminar-permanentemente,
+html.dark-mode [id*="eliminar"] {
+    color: #ff6b6b !important; /* Rojo claro y brillante tipo pastel */
+}
+
+/* Efecto al pasar el mouse */
+html.dark-mode [title*="liminar permanentemente"]:hover,
+html.dark-mode [title*="liminiar permanentemente"]:hover,
+html.dark-mode .eliminar-permanentemente:hover,
+html.dark-mode [id*="eliminar"]:hover {
+    color: #ff4d4d !important; /* Rojo un poco más intenso */
+    transform: scale(1.2) !important; /* Pequeño zoom */
+    display: inline-block;
+}
+
+/* ========================================================================== */
+/* BOMBA NUCLEAR CORREGIDA (PROTEGIENDO LA LÍNEA DIVISORIA)                   */
+/* ========================================================================== */
+
+/* 1. Atacamos SOLO al contenedor interno y al texto para matar la línea punteada */
+html.dark-mode body #tablaCargados tbody tr:hover td.celda-pedido .item-pedido-container,
+html.dark-mode body #tablaCargados tbody tr:hover td.celda-pedido .texto-pedido {
+    border-bottom-color: transparent !important; 
+    border-bottom-style: solid !important;       
+    text-decoration: none !important;            
+    background-image: none !important;           
+    box-shadow: none !important;                 
+}
+
+/* 2. Ocultamos pseudo-elementos solo del contenedor interno */
+html.dark-mode body #tablaCargados tbody tr:hover td.celda-pedido .item-pedido-container::after {
+    display: none !important;
+    content: none !important;
+}

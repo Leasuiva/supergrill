@@ -4,10 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Archivo Histórico - Supergrill</title>
+    <script>
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark-mode'); 
+        }
+    </script>
     <link rel="icon" href="{% static 'gestion/logo.ico' %}" type="image/x-icon">
     <link rel="stylesheet" href="{% static 'gestion/css/style.css' %}?v=5">
 </head>
 <body>
+    {% csrf_token %}
         <div class="contenedor-historial">
 
             <nav class="navbar" style="flex-direction: column; align-items: flex-start; gap: 12px; padding: 15px 20px;">

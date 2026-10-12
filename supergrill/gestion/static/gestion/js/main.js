@@ -859,3 +859,36 @@ window.guardarEdicionRapida = async function(idsStr, campo, nuevoValor) {
     } catch (err) { alert("❌ Error de conexión: " + err.message); }
 };
 
+/* ========================================================================== */
+/* MODO OSCURO (DARK MODE) CON TOGGLE SWITCH                                  */
+/* ========================================================================== */
+window.toggleThemeSwitch = function() {
+    const htmlTag = document.documentElement; // 👈 Cambio clave
+    const chk = document.getElementById('chkDarkMode');
+    const icono = document.getElementById('tema-icon');
+    
+    if (chk.checked) {
+        htmlTag.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'true');
+        if (icono) icono.innerText = '🌙';
+    } else {
+        htmlTag.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'false');
+        if (icono) icono.innerText = '☀️';
+    }
+};
+
+// Autocargar al inicio de la página y prender el switch si ya estaba oscuro
+document.addEventListener("DOMContentLoaded", () => {
+    const isDark = localStorage.getItem('darkMode') === 'true';
+    const chk = document.getElementById('chkDarkMode');
+    const icono = document.getElementById('tema-icon');
+    
+    if (isDark) {
+        document.documentElement.classList.add('dark-mode'); // 👈 Cambio clave
+        if (chk) chk.checked = true;
+        if (icono) icono.innerText = '🌙';
+    } else {
+        if (icono) icono.innerText = '☀️';
+    }
+});
