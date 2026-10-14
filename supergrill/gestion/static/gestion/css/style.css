@@ -2266,7 +2266,6 @@ html.dark-mode [id*="eliminar"]:hover {
 }
 
 /* ========================================================================== */
-/* BOMBA NUCLEAR CORREGIDA (PROTEGIENDO LA LÍNEA DIVISORIA)                   */
 /* ========================================================================== */
 
 /* 1. Atacamos SOLO al contenedor interno y al texto para matar la línea punteada */

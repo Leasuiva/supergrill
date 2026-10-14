@@ -27,3 +27,6 @@ build/
 dist/
 *.spec
 iniciador.exe
+
+# Ignorar el log de errores
+supergrill/errores_sistema.log
