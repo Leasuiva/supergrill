@@ -1,6 +1,7 @@
 /* ========================================================================== */
 /* PEDIDOS_CARGADOS.JS - LÓGICA EXCLUSIVA PARA DIBUJAR LA TABLA HISTORIAL     */
 /* ========================================================================== */
+let guardandoPedido = false;
 
 document.addEventListener("DOMContentLoaded", function () {
     const tablaCargados = document.getElementById("tablaCargados");
@@ -284,9 +285,14 @@ window.toggleOcultarGrupoHistorial = toggleOcultarGrupoHistorial;
 /* LÓGICA DE ARCHIVADO MASIVO CON VALIDACIÓN DE PENDIENTES                    */
 /* ========================================================================== */
 async function confirmarNuevaTabla() {
+    // 🔥 CANDADO ANTI DOBLE-CLIC
+    if (guardandoPedido) return; 
+
     try {
+        guardandoPedido = true; // 🔒 CERRAMOS CANDADO PARA EL FETCH DE CONTROL
         const resPendientes = await fetch(`/pedidos?t=${Date.now()}`);
         const pedidosHojaCarga = await resPendientes.json();
+        guardandoPedido = false; // 🔓 ABRIMOS PARA DEJAR PENSAR AL USUARIO
 
         if (pedidosHojaCarga && pedidosHojaCarga.length > 0) {
             alert(
@@ -300,13 +306,14 @@ async function confirmarNuevaTabla() {
         const mensajeConfirmacion = "¿Confirmas que deseas archivar todos los pedidos cargados y limpiar las tablas para iniciar un nuevo día?";
         
         if (confirm(mensajeConfirmacion)) {
+            guardandoPedido = true; // 🔒 AHORA SÍ CERRAMOS DEFINITIVO PARA EL BORRADO
+            
             const response = await fetch('/api/nueva_tabla', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
 
-                if (response.ok) {
-                // 🔥 LIMPIEZA MASIVA DE TODAS LAS MEMORIAS DEL DÍA
+            if (response.ok) {
                 localStorage.removeItem("ids_verde_fijo");
                 localStorage.removeItem("ids_azul_fijo");
                 localStorage.removeItem("flags_edicion");
@@ -315,17 +322,19 @@ async function confirmarNuevaTabla() {
                 localStorage.removeItem("ids_ocultos_historial"); 
                 localStorage.removeItem("estado_chk_ocultos"); 
                 
-                // 👇 ESTA LÍNEA ES LA NUEVA 👇
                 localStorage.setItem("dia_iniciado", "false"); 
 
                 alert("✅ Día archivado correctamente. Iniciando nueva jornada.");
                 window.location.href = '/'; 
+                // Acá no abrimos el candado porque la página se recarga sola.
             } else {
+                guardandoPedido = false; // 🔓 ABRIMOS SI FALLA
                 const err = await response.json();
                 alert("❌ Error al archivar: " + (err.error || "Error desconocido"));
             }
         }
     } catch (error) {
+        guardandoPedido = false; // 🔓 ABRIMOS SI FALLA LA CONEXIÓN
         console.error("Error en el proceso de cierre:", error);
         alert("❌ Error de comunicación con el servidor.");
     }
@@ -338,6 +347,10 @@ window.confirmarNuevaTabla = confirmarNuevaTabla;
 window.restaurarPedidos = async function(ids_str) {
     if (!confirm("¿Querés devolver estos pedidos a la pantalla principal? (Volverán a estar pendientes)")) return;
     
+    // 🔥 CANDADO ANTI DOBLE-CLIC
+    if (guardandoPedido) return; 
+    guardandoPedido = true; // 🔒 CERRAMOS CANDADO
+
     try {
         const ids = String(ids_str).split(",").map(id => parseInt(id));
         const res = await fetch("/api/restaurar_pedidos", {
@@ -348,10 +361,13 @@ window.restaurarPedidos = async function(ids_str) {
         
         if (res.ok) {
             cargarTablaCargados();
+            guardandoPedido = false; // 🔓 ABRIMOS CANDADO
         } else {
+            guardandoPedido = false; // 🔓 ABRIMOS SI FALLA
             alert("Error al intentar restaurar el pedido.");
         }
     } catch (e) {
+        guardandoPedido = false; // 🔓 ABRIMOS SI FALLA LA CONEXIÓN
         console.error("Error al intentar restaurar:", e);
     }
 };

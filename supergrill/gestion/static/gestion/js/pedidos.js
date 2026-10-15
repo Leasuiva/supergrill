@@ -7,6 +7,7 @@ let idsEditadosFijos = new Set();
 let idsUltimoLote = new Set();
 let datosOriginalesGrupo = null;
 let datosOriginalesPedido = null;
+let guardandoPedido = false;
 
 /* ========================================================================== */
 /* 1. LÓGICA DE TABLAS PRINCIPALES (Hoja de Carga)                            */
@@ -502,6 +503,10 @@ async function guardarEdicionPedido() {
         return alert("⚠️ Debes indicar una Dirección, Empresa o seleccionar 'Retira' / 'PedidosYa'."); 
     }
     
+    // 🔥 CANDADO ANTI DOBLE-CLIC
+    if (window.guardandoPedido) return; 
+    window.guardandoPedido = true;
+
     try {
         await apiFetch("/actualizar_pedido", { method: "POST", body: JSON.stringify(data) }); 
         
@@ -568,7 +573,15 @@ async function guardarEdicionPedido() {
         alert("✅ Pedido actualizado."); 
         cerrarModalEditar(); 
         recargarTablas(); 
-    } catch (err) { alert(`❌ Error de conexión: ${err.message}`); }
+        
+        // 🔥 ABRIMOS EL CANDADO AL TERMINAR CORRECTAMENTE
+        window.guardandoPedido = false;
+
+    } catch (err) { 
+        // 🔥 ABRIMOS EL CANDADO SI HUBO UN ERROR PARA QUE PUEDAN VOLVER A INTENTAR
+        window.guardandoPedido = false;
+        alert(`❌ Error de conexión: ${err.message}`); 
+    }
 }
 
 /* async function cargarPedidosDinamicos() {
@@ -906,6 +919,10 @@ async function cargarPedidosDinamicos() {
         volver_a_pendientes: volverAPendientes, es_frecuente: esFrecuente 
     };
 
+// 🔥 CANDADO ANTI DOBLE-CLIC
+    if (window.guardandoPedido) return; 
+    window.guardandoPedido = true;
+
     try {
         await apiFetch(url, { method: "POST", body: JSON.stringify(data) }); 
         const cantidadItemsCargados = pedidos.length; 
@@ -995,7 +1012,15 @@ async function cargarPedidosDinamicos() {
         cerrarModalNuevoPedido();
         if (typeof cargarPedidosEnTabla === "function") await cargarPedidosEnTabla();
         if (typeof recargarTablas === "function") recargarTablas();
-    } catch (err) { alert(`❌ Error: ${err.message}`); }
+        
+        // 🔥 ABRIMOS EL CANDADO AL TERMINAR CORRECTAMENTE
+        window.guardandoPedido = false;
+
+    } catch (err) { 
+        // 🔥 ABRIMOS EL CANDADO SI HUBO UN ERROR PARA QUE PUEDAN VOLVER A INTENTAR
+        window.guardandoPedido = false;
+        alert(`❌ Error: ${err.message}`); 
+    }
 }
 /* ========================================================================== */
 /* 3. ACCIONES DE FILA Y TABLA (Mover, Borrar, Ocultar)                       */
