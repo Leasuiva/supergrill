@@ -775,19 +775,31 @@ def buscar_rendicion_cadetes(request):
         return JsonResponse({"estado": "error", "mensaje": str(e)}, status=500)
 
 # =================================================================
-# BOTON ACTUALIZR EN PEDIDOS CARGADOS
+# BOTON ACTUALIZAR EN PEDIDOS CARGADOS
 # =================================================================
 @csrf_exempt
 def actualizar_sistema(request):
-    """Ejecuta git pull en el servidor para traer las últimas actualizaciones"""
+    """Fuerza la actualización del servidor con la versión exacta de GitHub"""
     if request.method == 'POST':
         try:
-            resultado = subprocess.run(
-                ['git', 'pull'],
-                capture_output=True,
-                text=True,
-                check=True
+            # 1. Traemos la información fresca de GitHub sin intentar unirla todavía
+            subprocess.run(
+                ['git', 'fetch', 'origin'], 
+                check=True, 
+                capture_output=True, 
+                text=True
             )
+            
+            # 2. Obligamos a la PC a machacar cualquier cambio local y ser un clon de la nube
+            # Nota: Si tu rama en GitHub se llama "master", cambiá "origin/main" por "origin/master"
+            resultado = subprocess.run(
+                ['git', 'reset', '--hard', 'origin/main'], 
+                check=True, 
+                capture_output=True, 
+                text=True
+            )
+            
             return JsonResponse({'estado': 'ok', 'log': resultado.stdout})
+            
         except subprocess.CalledProcessError as e:
             return JsonResponse({'estado': 'error', 'log': e.stderr})

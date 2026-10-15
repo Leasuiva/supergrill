@@ -349,7 +349,7 @@ window.restaurarPedidos = async function(ids_str) {
     
     // 🔥 CANDADO ANTI DOBLE-CLIC
     if (guardandoPedido) return; 
-    guardandoPedido = true; // 🔒 CERRAMOS CANDADO
+    guardandoPedido = true; //  CERRAMOS CANDADO
 
     try {
         const ids = String(ids_str).split(",").map(id => parseInt(id));
